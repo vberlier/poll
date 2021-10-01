@@ -1,4 +1,3 @@
-use serde_json::json;
 use worker::*;
 
 mod utils;
@@ -11,40 +10,113 @@ fn log_request(req: &Request) {
         req.cf().coordinates().unwrap_or_default(),
         req.cf().region().unwrap_or("unknown region".into())
     );
+
+    for (key, value) in req.headers() {
+        console_log!("{}: {}", key, value);
+    }
+}
+
+fn get_poll_parameter(req: &Request) -> Option<(String, Option<String>)> {
+    req.url()
+        .ok()?
+        .query_pairs()
+        .find(|(key, _)| {
+            key.split_once('.')
+                .map(|(scope, name)| !scope.is_empty() && !name.is_empty())
+                .unwrap_or(false)
+        })
+        .map(|(key, value)| {
+            (
+                String::from(key),
+                if value.is_empty() {
+                    None
+                } else {
+                    Some(String::from(value))
+                },
+            )
+        })
+}
+
+fn render_svg(width: i32, height: i32, padding: i32, count: i32, total: i32) -> String {
+    let image_width = width + 2 * padding;
+    let image_height = height + 2 * padding;
+
+    let fill_width = (count as f64) / (total as f64) * (width as f64);
+    let empty_width = (width as f64) - fill_width;
+    let position = (padding as f64) + fill_width;
+
+    format!(
+        r###"
+            <svg
+                width="{image_width}"
+                height="{image_height}"
+                viewBox="0 0 {image_width} {image_height}"
+                xmlns="http://www.w3.org/2000/svg"
+            >
+                <mask id="bar-mask">
+                    <rect x="{padding}" y="{padding}" width="{width}" height="{height}" fill="white" rx="5" />
+                </mask>
+                <rect
+                    mask="url(#bar-mask)"
+                    x="{padding}"
+                    y="{padding}"
+                    width="{fill_width}"
+                    height="{height}"
+                    fill="#2563EB"
+                />
+                <rect
+                    mask="url(#bar-mask)"
+                    x="{position}"
+                    y="{padding}"
+                    width="{empty_width}"
+                    height="{height}"
+                    fill="#93C5FD"
+                />
+            </svg>
+        "###,
+        width = width,
+        height = height,
+        image_width = image_width,
+        image_height = image_height,
+        padding = padding,
+        fill_width = fill_width,
+        empty_width = empty_width,
+        position = position
+    )
 }
 
 #[event(fetch)]
 pub async fn main(req: Request, env: Env) -> Result<Response> {
     log_request(&req);
 
-    // Optionally, get more helpful error messages written to the console in the case of a panic.
+    // Get more helpful error messages written to the console in the case of a panic.
     utils::set_panic_hook();
 
-    // Optionally, use the Router to handle matching endpoints, use ":name" placeholders, or "*name"
-    // catch-alls to match on specific patterns. Alternatively, use `Router::with_data(D)` to
-    // provide arbitrary data that will be accessible in each route via the `ctx.data()` method.
     let router = Router::new();
 
-    // Add as many routes as your Worker needs! Each route will get a `Request` for handling HTTP
-    // functionality and a `RouteContext` which you can use to  and get route parameters and
-    // Environment bindings like KV Stores, Durable Objects, Secrets, and Variables.
     router
-        .get("/", |_, _| Response::ok("Hello from Workers!"))
-        .post_async("/form/:field", |mut req, ctx| async move {
-            if let Some(name) = ctx.param("field") {
-                let form = req.form_data().await?;
-                match form.get(name) {
-                    Some(FormEntry::Field(value)) => {
-                        return Response::from_json(&json!({ name: value }))
-                    }
-                    Some(FormEntry::File(_)) => {
-                        return Response::error("`field` param in form shouldn't be a File", 422);
-                    }
-                    None => return Response::error("Bad Request", 400),
-                }
+        .get("/vote", |req, _| {
+            let mut headers = Headers::new();
+            headers.append("Cache-Control", "private, max-age=0, no-cache")?;
+
+            if let Some((poll, option)) = get_poll_parameter(&req) {
+                console_log!("{}={}", poll, option.unwrap_or("<no option>".into()));
             }
 
-            Response::error("Bad Request", 400)
+            Ok(Response::ok("")?.with_headers(headers))
+        })
+        .get("/show", |req, _| {
+            let mut headers = Headers::new();
+            headers.append("Cache-Control", "private, max-age=0, no-cache")?;
+            headers.append("Content-Type", "image/svg+xml; charset=utf-8")?;
+
+            if let Some((poll, option)) = get_poll_parameter(&req) {
+                console_log!("{}={}", poll, option.unwrap_or("<no option>".into()));
+            }
+
+            let svg = render_svg(300, 12, 2, 52, 70);
+
+            Ok(Response::ok(svg)?.with_headers(headers))
         })
         .get("/worker-version", |_, ctx| {
             let version = ctx.var("WORKERS_RS_VERSION")?.to_string();

@@ -3,6 +3,11 @@ name = "poll"
 version = "0.1.0"
 authors = ["Valentin Berlier <berlier.v@gmail.com>"]
 edition = "2018"
+license = "MIT"
+
+readme = "README.md"
+description = "Cloudflare worker for embedding polls"
+repository = "https://github.com/vberlier/poll.git"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
