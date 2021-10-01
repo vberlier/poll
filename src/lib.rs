@@ -10,10 +10,6 @@ fn log_request(req: &Request) {
         req.cf().coordinates().unwrap_or_default(),
         req.cf().region().unwrap_or("unknown region".into())
     );
-
-    for (key, value) in req.headers() {
-        console_log!("{}: {}", key, value);
-    }
 }
 
 fn get_poll_parameter(req: &Request) -> Option<(String, Option<String>)> {
@@ -96,14 +92,30 @@ pub async fn main(req: Request, env: Env) -> Result<Response> {
 
     router
         .get("/vote", |req, _| {
-            let mut headers = Headers::new();
-            headers.append("Cache-Control", "private, max-age=0, no-cache")?;
+            // Return to the previous page with `history.back()` if `redirect` is not specified.
+            let mut response = Response::ok("<script>history.back()</script>")?;
+            response
+                .headers_mut()
+                .append("Content-Type", "text/html; charset=utf-8")?;
+
+            if let Ok(url) = req.url() {
+                if let Some((_, redirect)) = url.query_pairs().find(|(key, _)| key == "redirect") {
+                    response = Response::empty()?.with_status(302);
+                    response
+                        .headers_mut()
+                        .append("Location", redirect.as_ref())?;
+                }
+            }
+
+            response
+                .headers_mut()
+                .append("Cache-Control", "private, max-age=0, no-cache")?;
 
             if let Some((poll, option)) = get_poll_parameter(&req) {
                 console_log!("{}={}", poll, option.unwrap_or("<no option>".into()));
             }
 
-            Ok(Response::ok("")?.with_headers(headers))
+            Ok(response)
         })
         .get("/show", |req, _| {
             let mut headers = Headers::new();
