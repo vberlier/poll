@@ -111,10 +111,43 @@ pub async fn main(req: Request, env: Env) -> Result<Response> {
                 }
             }
 
-            if let Some((poll, Some(option))) = get_poll_parameter(&req) {
-                console_log!("vote {}={}", poll, option);
+            response
+                .headers_mut()
+                .append("Cache-Control", "private, max-age=0, no-cache")?;
 
-                let store = ctx.kv("POLL")?;
+            let store = ctx.kv("POLL")?;
+
+            let ip = match req.headers().get("x-real-ip")? {
+                Some(ip) => ip,
+                None => return Ok(response),
+            };
+
+            if let Some((poll, Some(option))) = get_poll_parameter(&req) {
+                // Create anonymized voter identifier based on ip and poll id.
+                let voter_id = base64::encode(
+                    blake3::Hasher::new()
+                        .update(ip.as_bytes())
+                        .update(b"$")
+                        .update(poll.as_bytes())
+                        .update(b"$")
+                        .update(ctx.secret("secret_key")?.to_string().as_bytes())
+                        .finalize()
+                        .as_bytes(),
+                );
+
+                console_log!("vote {}={} ({})", poll, option, voter_id);
+
+                let key_voted = format!("voted:{}:{}", poll, voter_id);
+                let voted_flag = store
+                    .get(&key_voted)
+                    .await?
+                    .and_then(|value| value.as_json::<i32>().ok())
+                    .unwrap_or(0);
+
+                // Return early if already voted.
+                if voted_flag != 0 {
+                    return Ok(response);
+                }
 
                 // Increment both the total amount of votes and the count for the selected option.
                 for key in [
@@ -133,11 +166,10 @@ pub async fn main(req: Request, env: Env) -> Result<Response> {
 
                     console_log!("{} = {}", key, value + 1);
                 }
-            }
 
-            response
-                .headers_mut()
-                .append("Cache-Control", "private, max-age=0, no-cache")?;
+                // Set the voted flag for this user.
+                store.put(&key_voted, 1)?.execute().await?;
+            }
 
             Ok(response)
         })
