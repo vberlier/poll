@@ -95,25 +95,32 @@ pub async fn main(req: Request, env: Env) -> Result<Response> {
     let router = Router::new();
 
     router
+        .get("/", |_, _| {
+            let mut response = Response::empty()?.with_status(302);
+            response
+                .headers_mut()
+                .append("Location", "https://github.com/vberlier/poll")?;
+            Ok(response)
+        })
         .get_async("/vote", |req, ctx| async move {
             // Return to the previous page with `history.back()` if `redirect` is not specified.
             let mut response = Response::ok("<script>history.back()</script>")?;
             response
                 .headers_mut()
-                .append("Content-Type", "text/html; charset=utf-8")?;
+                .append("content-type", "text/html; charset=utf-8")?;
 
             if let Ok(url) = req.url() {
                 if let Some((_, redirect)) = url.query_pairs().find(|(key, _)| key == "redirect") {
                     response = Response::empty()?.with_status(302);
                     response
                         .headers_mut()
-                        .append("Location", redirect.as_ref())?;
+                        .append("location", redirect.as_ref())?;
                 }
             }
 
             response
                 .headers_mut()
-                .append("Cache-Control", "private, max-age=0, no-cache")?;
+                .append("cache-control", "private, max-age=0, no-cache")?;
 
             let store = ctx.kv("POLL")?;
 
@@ -207,14 +214,10 @@ pub async fn main(req: Request, env: Env) -> Result<Response> {
             }
 
             let mut headers = Headers::new();
-            headers.append("Content-Type", "image/svg+xml; charset=utf-8")?;
-            headers.append("Cache-Control", "private, max-age=0, no-cache")?;
+            headers.append("content-type", "image/svg+xml; charset=utf-8")?;
+            headers.append("cache-control", "private, max-age=0, no-cache")?;
 
             Ok(Response::ok(svg)?.with_headers(headers))
-        })
-        .get("/worker-version", |_, ctx| {
-            let version = ctx.var("WORKERS_RS_VERSION")?.to_string();
-            Response::ok(version)
         })
         .run(req, env)
         .await
