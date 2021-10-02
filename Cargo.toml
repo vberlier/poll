@@ -6,7 +6,7 @@ edition = "2018"
 license = "MIT"
 
 readme = "README.md"
-description = "Cloudflare worker for embedding polls"
+description = "Cloudflare worker for embedding polls anywhere"
 repository = "https://github.com/vberlier/poll.git"
 
 [lib]
