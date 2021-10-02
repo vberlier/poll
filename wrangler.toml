@@ -4,6 +4,10 @@ workers_dev = true
 compatibility_date = "2021-10-01"
 compatibility_flags = [ "formdata_parser_supports_files" ] # required
 
+kv_namespaces = [
+  { binding = "POLL", preview_id = "fc438cc923ee44f99eb5dac0976d13f0", id = "6d946deab2eb42529a52cecaa28a6f81" }
+]
+
 [vars]
 WORKERS_RS_VERSION = "0.0.6"
 

@@ -37,7 +37,11 @@ fn render_svg(width: i32, height: i32, padding: i32, count: i32, total: i32) -> 
     let image_width = width + 2 * padding;
     let image_height = height + 2 * padding;
 
-    let fill_width = (count as f64) / (total as f64) * (width as f64);
+    let fill_width = match total {
+        0 => 0.0,
+        _ => (count as f64) / (total as f64) * (width as f64),
+    };
+
     let empty_width = (width as f64) - fill_width;
     let position = (padding as f64) + fill_width;
 
@@ -91,7 +95,7 @@ pub async fn main(req: Request, env: Env) -> Result<Response> {
     let router = Router::new();
 
     router
-        .get("/vote", |req, _| {
+        .get_async("/vote", |req, ctx| async move {
             // Return to the previous page with `history.back()` if `redirect` is not specified.
             let mut response = Response::ok("<script>history.back()</script>")?;
             response
@@ -107,26 +111,72 @@ pub async fn main(req: Request, env: Env) -> Result<Response> {
                 }
             }
 
+            if let Some((poll, Some(option))) = get_poll_parameter(&req) {
+                console_log!("vote {}={}", poll, option);
+
+                let store = ctx.kv("POLL")?;
+
+                // Increment both the total amount of votes and the count for the selected option.
+                for key in [
+                    format!("total:{}", poll),
+                    format!("count:{}:{}", poll, option),
+                ] {
+                    let value = store
+                        .get(&key)
+                        .await?
+                        .and_then(|value| value.as_json::<i32>().ok())
+                        .unwrap_or(0);
+
+                    console_log!("{} = {}", key, value);
+
+                    store.put(&key, value + 1)?.execute().await?;
+
+                    console_log!("{} = {}", key, value + 1);
+                }
+            }
+
             response
                 .headers_mut()
                 .append("Cache-Control", "private, max-age=0, no-cache")?;
 
-            if let Some((poll, option)) = get_poll_parameter(&req) {
-                console_log!("{}={}", poll, option.unwrap_or("<no option>".into()));
-            }
-
             Ok(response)
         })
-        .get("/show", |req, _| {
-            let mut headers = Headers::new();
-            headers.append("Cache-Control", "private, max-age=0, no-cache")?;
-            headers.append("Content-Type", "image/svg+xml; charset=utf-8")?;
+        .get_async("/show", |req, ctx| async move {
+            let width = 300;
+            let height = 12;
+            let padding = 2;
 
-            if let Some((poll, option)) = get_poll_parameter(&req) {
-                console_log!("{}={}", poll, option.unwrap_or("<no option>".into()));
+            let mut svg = render_svg(width, height, padding, 0, 0);
+
+            if let Some((poll, Some(option))) = get_poll_parameter(&req) {
+                console_log!("{}={}", poll, option);
+
+                let store = ctx.kv("POLL")?;
+
+                let key_total = format!("total:{}", poll);
+                let total = store
+                    .get(&key_total)
+                    .await?
+                    .and_then(|value| value.as_json::<i32>().ok())
+                    .unwrap_or(0);
+
+                console_log!("{} = {}", key_total, total);
+
+                let key_count = format!("count:{}:{}", poll, option);
+                let count = store
+                    .get(&key_count)
+                    .await?
+                    .and_then(|value| value.as_json::<i32>().ok())
+                    .unwrap_or(0);
+
+                console_log!("{} = {}", key_count, count);
+
+                svg = render_svg(width, height, padding, count, total);
             }
 
-            let svg = render_svg(300, 12, 2, 52, 70);
+            let mut headers = Headers::new();
+            headers.append("Content-Type", "image/svg+xml; charset=utf-8")?;
+            headers.append("Cache-Control", "private, max-age=0, no-cache")?;
 
             Ok(Response::ok(svg)?.with_headers(headers))
         })
