@@ -10,40 +10,139 @@
 
 **Features**
 
-- No sign up, just paste urls in your html/markdown
 - Unlimited polls and unlimited options per poll
-- GDPR compliant, no tracking, the service doesn't store any personal information
+- No setup required, polls and all their options are created on-the-fly
+- No sign up, just paste urls in your html/markdown
+- GDPR compliant, no tracking, the worker doesn't store any personal information
 
 ## Getting started
 
-To create a poll you first need to come up with a unique namespaced identifier.
+The worker provides a voting endpoint that you can use as a clickable link. When someone clicks the voting link, the worker increments a counter associated with the selected option and redirects them to the previous page. If the user clicks any of the options again, nothing will happen because the worker will remember that they already voted on this poll.
+
+- **Voting endpoint**
+
+  ```
+  https://poll.fizzy.wtf/vote?<poll>=<option>
+  ```
+
+In addition to the voting endpoint, the worker can render svg widgets for showing the results of the poll. The widget endpoints are meant to be used directly as images.
+
+- **Widget endpoints**
+
+  ```
+  https://poll.fizzy.wtf/show?<poll>=<option>
+  https://poll.fizzy.wtf/count?<poll>
+  https://poll.fizzy.wtf/count?<poll>=<option>
+  ```
+
+That's it! You can now create dynamic polls anywhere. Just add a voting link for each option and use some of the available widgets to show the results.
+
+## Creating a poll step by step
+
+The first thing to do is to come up with a unique scoped identifier for your poll. It needs to contain a `.` (dot character) to separate the scope from the name of the poll.
 
 ```
 vberlier.pineapple_pizza
 ```
 
-Then use the available endpoints to compose your poll however you like:
+Then add voting links for each option. You can display the options however you want as long as the user can click on the voting links.
 
-- `https://poll.fizzy.wtf/show?<poll>=<option>`
+```md
+Pineapple on pizza?
 
-  The `show` endpoint is meant to be used as an image. It responds with a horizontal bar that's filled according to the number of votes for the specified option.
+- [Yes](https://poll.fizzy.wtf/vote?vberlier.pineapple_pizza=yes)
+
+- [No](https://poll.fizzy.wtf/vote?vberlier.pineapple_pizza=no)
+```
+
+Now to display the results we're going to use the `show` endpoint to render a horizontal bar filled according to the number of votes for each option.
+
+```md
+Pineapple on pizza?
+
+- [Yes](https://poll.fizzy.wtf/vote?vberlier.pineapple_pizza=yes)
+
+  ![](https://poll.fizzy.wtf/show?vberlier.pineapple_pizza=yes)
+
+- [No](https://poll.fizzy.wtf/vote?vberlier.pineapple_pizza=no)
+
+  ![](https://poll.fizzy.wtf/show?vberlier.pineapple_pizza=no)
+```
+
+We're done! This is the final result:
+
+---
+
+Pineapple on pizza?
+
+- [Yes](https://poll.fizzy.wtf/vote?vberlier.pineapple_pizza=yes)
+
+  ![](https://poll.fizzy.wtf/show?vberlier.pineapple_pizza=yes)
+
+- [No](https://poll.fizzy.wtf/vote?vberlier.pineapple_pizza=no)
+
+  ![](https://poll.fizzy.wtf/show?vberlier.pineapple_pizza=no)
+
+---
+
+Feel free to be creative when it comes to the layout and the formatting. For example if you want to keep the results hidden by default you can use a `<details>` element:
+
+---
+
+Pineapple on pizza?
+
+- [Yes](https://poll.fizzy.wtf/vote?vberlier.pineapple_pizza=yes)
+
+  <details>
+    <summary>Results</summary>
+
+  ![](https://poll.fizzy.wtf/show?vberlier.pineapple_pizza=yes)
+
+  </details>
+
+- [No](https://poll.fizzy.wtf/vote?vberlier.pineapple_pizza=no)
+
+  <details>
+    <summary>Results</summary>
+
+  ![](https://poll.fizzy.wtf/show?vberlier.pineapple_pizza=no)
+
+  </details>
+
+---
+
+## Clean redirections
+
+By default, after clicking the voting link, the worker will bring the user back to the previous page by using a script that calls `history.back()`. However this can cause a slight flicker when voting so you can specify an explicit `redirect` parameter to make the endpoint return a 302 to the url of your choice.
+
+```
+https://poll.fizzy.wtf/vote?vberlier.pineapple_pizza=yes&redirect=https://github.com/vberlier/poll
+```
+
+## Available widgets
+
+- **Horizontal bar**
+
+  ![](https://poll.fizzy.wtf/show?vberlier.pineapple_pizza=yes)
 
   ```
-  https://poll.fizzy.wtf/show?vberlier.pineapple_pizza=yes
+  https://poll.fizzy.wtf/show?<poll>=<option>
   ```
 
-- `https://poll.fizzy.wtf/vote?<poll>=<option>`
+- **Vote count**
 
-  The `vote` endpoint is meant to be used with a clickable link to let the user vote for the specified option.
-
-  ```
-  https://poll.fizzy.wtf/vote?vberlier.pineapple_pizza=no
-  ```
-
-  By default, after clicking the link, the endpoint will bring the user back to the previous page with `history.back()`. However this can cause a slight flicker when voting so you can specify an explicit `redirect` parameter to make the endpoint return a 302 to the url of your choice.
+  ![](https://poll.fizzy.wtf/count?vberlier.pineapple_pizza=yes)
 
   ```
-  https://poll.fizzy.wtf/vote?vberlier.pineapple_pizza=yes&redirect=https://github.com/vberlier/poll
+  https://poll.fizzy.wtf/count?<poll>=<option>
+  ```
+
+- **Total vote count**
+
+  ![](https://poll.fizzy.wtf/count?vberlier.pineapple_pizza)
+
+  ```
+  https://poll.fizzy.wtf/count?<poll>
   ```
 
 ## Contributing
