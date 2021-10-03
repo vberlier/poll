@@ -36,7 +36,7 @@ pub async fn main(req: Request, env: Env) -> Result<Response> {
         .get_async("/vote", |req, ctx| async move {
             let mut headers = Headers::new();
             headers.append("content-type", "text/html; charset=utf-8")?;
-            headers.append("cache-control", "public, max-age=15")?;
+            headers.append("cache-control", "no-store")?;
 
             // Return to the previous page with `history.back()` by default.
             let mut response =
