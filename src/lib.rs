@@ -1,12 +1,11 @@
 use std::convert::TryFrom;
 
+use widgets::render_count;
 use worker::*;
 
 mod params;
 mod utils;
 mod widgets;
-
-use widgets::Widget;
 
 fn log_request(req: &Request) {
     console_log!(
@@ -226,6 +225,10 @@ pub async fn main(req: Request, env: Env) -> Result<Response> {
             Ok(Response::ok(svg)?.with_headers(headers))
         })
         .get_async("/count", |req, ctx| async move {
+            let mut headers = Headers::new();
+            headers.append("content-type", "image/svg+xml; charset=utf-8")?;
+            headers.append("cache-control", "private, max-age=0, no-cache")?;
+
             if let Ok(common) = params::CommonParams::try_from(&req) {
                 let store = ctx.kv("POLL")?;
 
@@ -241,9 +244,9 @@ pub async fn main(req: Request, env: Env) -> Result<Response> {
                     .and_then(|value| value.as_json::<i32>().ok())
                     .unwrap_or(0);
 
-                widgets::CountWidget::new(count).format_response()
+                Ok(Response::ok(render_count(count))?.with_headers(headers))
             } else {
-                widgets::CountWidget::new(0).format_response()
+                Ok(Response::ok(render_count(0))?.with_headers(headers))
             }
         })
         .run(req, env)
