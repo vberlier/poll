@@ -1,6 +1,6 @@
 use std::fmt;
 
-use worker::{Response, Result};
+use worker::{Headers, Response, Result};
 
 pub trait Widget {
     fn format_response(self) -> Result<Response>;
@@ -11,11 +11,10 @@ where
     T: ToString,
 {
     fn format_response(self) -> Result<Response> {
-        let mut response = Response::ok(self.to_string())?;
-        response
-            .headers_mut()
-            .append("content-type", "image/svg+xml; charset=utf-8")?;
-        Ok(response)
+        let mut headers = Headers::new();
+        headers.append("content-type", "image/svg+xml; charset=utf-8")?;
+        headers.append("cache-control", "private, max-age=0, no-cache")?;
+        Ok(Response::ok(self.to_string())?.with_headers(headers))
     }
 }
 
