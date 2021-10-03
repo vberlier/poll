@@ -2,10 +2,10 @@
 
 > Cloudflare worker for embedding polls anywhere.
 
-| Pineapple on pizza?                                                                                                 |                                                               |
-| ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| [👍 Yes](https://poll.fizzy.wtf/vote?vberlier.pineapple_pizza=yes&redirect=https://github.com/vberlier/poll%23poll) | ![](https://poll.fizzy.wtf/show?vberlier.pineapple_pizza=yes) |
-| [👎 No](https://poll.fizzy.wtf/vote?vberlier.pineapple_pizza=no&redirect=https://github.com/vberlier/poll%23poll)   | ![](https://poll.fizzy.wtf/show?vberlier.pineapple_pizza=no)  |
+| Pineapple on pizza?                                                                                                 | ![](https://poll.fizzy.wtf/count?vberlier.pineapple_pizza) responses |
+| ------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| [Yes 👍](https://poll.fizzy.wtf/vote?vberlier.pineapple_pizza=yes&redirect=https://github.com/vberlier/poll%23poll) | ![](https://poll.fizzy.wtf/show?vberlier.pineapple_pizza=yes)        |
+| [No 👎](https://poll.fizzy.wtf/vote?vberlier.pineapple_pizza=no&redirect=https://github.com/vberlier/poll%23poll)   | ![](https://poll.fizzy.wtf/show?vberlier.pineapple_pizza=no)         |
 
 **Features**
 

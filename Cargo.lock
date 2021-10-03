@@ -395,6 +395,7 @@ dependencies = [
  "cfg-if 0.1.10",
  "console_error_panic_hook",
  "serde_json",
+ "url",
  "wee_alloc",
  "worker",
 ]

@@ -1,6 +1,12 @@
+use std::convert::TryFrom;
+
 use worker::*;
 
+mod params;
 mod utils;
+mod widgets;
+
+use widgets::Widget;
 
 fn log_request(req: &Request) {
     console_log!(
@@ -218,6 +224,27 @@ pub async fn main(req: Request, env: Env) -> Result<Response> {
             headers.append("cache-control", "private, max-age=0, no-cache")?;
 
             Ok(Response::ok(svg)?.with_headers(headers))
+        })
+        .get_async("/count", |req, ctx| async move {
+            if let Ok(common) = params::CommonParams::try_from(&req) {
+                let store = ctx.kv("POLL")?;
+
+                let key = if let Some(option) = common.option {
+                    format!("count:{}:{}", common.poll, option)
+                } else {
+                    format!("total:{}", common.poll)
+                };
+
+                let count = store
+                    .get(&key)
+                    .await?
+                    .and_then(|value| value.as_json::<i32>().ok())
+                    .unwrap_or(0);
+
+                widgets::CountWidget::new(count).format_response()
+            } else {
+                widgets::CountWidget::new(0).format_response()
+            }
         })
         .run(req, env)
         .await
