@@ -1,8 +1,10 @@
-# poll
+# poll.fizzy.wtf
 
 > Cloudflare worker for embedding polls anywhere.
 
-| Pineapple on pizza?                                                                                                 |                                                               |                                                                |
+**🍕 Pineapple on pizza? 🍍**
+
+|                                                                                                                     |                                                               |                                                                |
 | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------: | -------------------------------------------------------------: |
 | [Yes 👍](https://poll.fizzy.wtf/vote?vberlier.pineapple_pizza=yes&redirect=https://github.com/vberlier/poll%23poll) | ![](https://poll.fizzy.wtf/show?vberlier.pineapple_pizza=yes) | ![](https://poll.fizzy.wtf/count?vberlier.pineapple_pizza=yes) |
 | [No 👎](https://poll.fizzy.wtf/vote?vberlier.pineapple_pizza=no&redirect=https://github.com/vberlier/poll%23poll)   |  ![](https://poll.fizzy.wtf/show?vberlier.pineapple_pizza=no) |  ![](https://poll.fizzy.wtf/count?vberlier.pineapple_pizza=no) |
@@ -69,47 +71,7 @@ Pineapple on pizza?
   ![](https://poll.fizzy.wtf/show?vberlier.pineapple_pizza=no)
 ```
 
-We're done! This is the final result:
-
----
-
-Pineapple on pizza?
-
-- [Yes](https://poll.fizzy.wtf/vote?vberlier.pineapple_pizza=yes)
-
-  ![](https://poll.fizzy.wtf/show?vberlier.pineapple_pizza=yes)
-
-- [No](https://poll.fizzy.wtf/vote?vberlier.pineapple_pizza=no)
-
-  ![](https://poll.fizzy.wtf/show?vberlier.pineapple_pizza=no)
-
----
-
-Feel free to be creative when it comes to the layout and the formatting. For example if you want to keep the results hidden by default you can use a `<details>` element:
-
----
-
-Pineapple on pizza?
-
-- [Yes](https://poll.fizzy.wtf/vote?vberlier.pineapple_pizza=yes)
-
-  <details>
-    <summary>Results</summary>
-
-  ![](https://poll.fizzy.wtf/show?vberlier.pineapple_pizza=yes)
-
-  </details>
-
-- [No](https://poll.fizzy.wtf/vote?vberlier.pineapple_pizza=no)
-
-  <details>
-    <summary>Results</summary>
-
-  ![](https://poll.fizzy.wtf/show?vberlier.pineapple_pizza=no)
-
-  </details>
-
----
+We're done! Feel free to be creative when it comes to layout and formatting. For example if you wanted to keep the results hidden by default you could wrap the horizontal bar in a `<details>` element.
 
 ## Clean redirections
 
