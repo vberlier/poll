@@ -1,18 +1,20 @@
 use std::fmt;
 
+pub trait Dimensions {
+    fn width(&self) -> i32;
+    fn height(&self) -> i32;
+}
+
 #[derive(Debug)]
-struct WidgetWrapper<F> {
+pub struct Widget<T> {
     width: i32,
     height: i32,
     padding: i32,
-    content: F,
+    content: T,
 }
 
-impl<F> WidgetWrapper<F>
-where
-    F: Fn(&mut fmt::Formatter) -> fmt::Result,
-{
-    pub fn new(width: i32, height: i32, padding: i32, content: F) -> Self {
+impl<T: fmt::Display> Widget<T> {
+    pub fn new(width: i32, height: i32, padding: i32, content: T) -> Self {
         Self {
             width,
             height,
@@ -22,10 +24,18 @@ where
     }
 }
 
-impl<F> fmt::Display for WidgetWrapper<F>
-where
-    F: Fn(&mut fmt::Formatter) -> fmt::Result,
-{
+impl<T> Widget<T> {
+    pub fn with_padding(mut self, padding: i32) -> Self {
+        self.padding = padding;
+        self
+    }
+}
+
+pub fn wrap<T: fmt::Display + Dimensions>(content: T) -> Widget<T> {
+    Widget::new(content.width(), content.height(), 0, content)
+}
+
+impl<T: fmt::Display> fmt::Display for Widget<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let width = self.width + self.padding * 2;
         let height = self.height + self.padding * 2;
@@ -46,7 +56,7 @@ where
             padding = self.padding
         )?;
 
-        (self.content)(f)?;
+        self.content.fmt(f)?;
 
         write!(
             f,
@@ -60,13 +70,32 @@ where
     }
 }
 
-pub fn render_count(count: i32) -> String {
-    let digits = (count as f64 + 0.5).log10().abs() as i32 + 1;
+#[derive(Debug)]
+pub struct NumberBadge {
+    value: i32,
+}
 
-    let width = (digits + 2) * 8;
-    let height = 18;
+impl NumberBadge {
+    pub fn new(value: i32) -> Self {
+        Self { value }
+    }
+}
 
-    WidgetWrapper::new(width, height, 2, |f| {
+impl Dimensions for NumberBadge {
+    fn width(&self) -> i32 {
+        ((self.value as f64 + 0.5).log10().abs() as i32 + 1 + 2) * 8
+    }
+
+    fn height(&self) -> i32 {
+        18
+    }
+}
+
+impl fmt::Display for NumberBadge {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let width = self.width();
+        let height = self.height();
+
         write!(
             f,
             r###"
@@ -94,23 +123,52 @@ pub fn render_count(count: i32) -> String {
             "###,
             width = width,
             height = height,
-            count = count
+            count = self.value
         )
-    }).to_string()
+    }
 }
 
-pub fn render_bar(count: i32, total: i32) -> String {
-    let width = 240;
-    let height = 10;
+#[derive(Debug)]
+pub struct HorizontalBar {
+    width: i32,
+    height: i32,
+    count: i32,
+    total: i32,
+}
 
-    let fill_width = match total {
-        0 => 0.0,
-        _ => (count as f64) / (total as f64) * (width as f64),
-    };
+impl HorizontalBar {
+    pub fn new(width: i32, height: i32, count: i32, total: i32) -> Self {
+        Self {
+            width,
+            height,
+            count,
+            total,
+        }
+    }
+}
 
-    let empty_width = (width as f64) - fill_width;
+impl Dimensions for HorizontalBar {
+    fn width(&self) -> i32 {
+        self.width
+    }
 
-    WidgetWrapper::new(width, height, 2, |f| {
+    fn height(&self) -> i32 {
+        self.height
+    }
+}
+
+impl fmt::Display for HorizontalBar {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let width = self.width();
+        let height = self.height();
+
+        let fill_width = match self.total {
+            0 => 0.0,
+            _ => (self.count as f64) / (self.total as f64) * (width as f64),
+        };
+
+        let empty_width = (width as f64) - fill_width;
+
         write!(
             f,
             r###"
@@ -139,6 +197,5 @@ pub fn render_bar(count: i32, total: i32) -> String {
             fill_width = fill_width,
             empty_width = empty_width,
         )
-    })
-    .to_string()
+    }
 }

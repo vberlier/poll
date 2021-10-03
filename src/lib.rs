@@ -107,13 +107,21 @@ pub async fn main(req: Request, env: Env) -> Result<Response> {
                         .and_then(|value| value.as_json::<i32>().ok())
                         .unwrap_or(0);
 
-                    return Ok(
-                        Response::ok(widgets::render_bar(count, total))?.with_headers(headers)
-                    );
+                    return Ok(Response::ok(
+                        widgets::wrap(widgets::HorizontalBar::new(240, 10, count, total))
+                            .with_padding(2)
+                            .to_string(),
+                    )?
+                    .with_headers(headers));
                 }
             }
 
-            Ok(Response::ok(widgets::render_bar(0, 0))?.with_headers(headers))
+            Ok(Response::ok(
+                widgets::wrap(widgets::HorizontalBar::new(240, 10, 0, 0))
+                    .with_padding(2)
+                    .to_string(),
+            )?
+            .with_headers(headers))
         })
         .get_async("/count", |req, ctx| async move {
             let mut headers = Headers::new();
@@ -135,9 +143,19 @@ pub async fn main(req: Request, env: Env) -> Result<Response> {
                     .and_then(|value| value.as_json::<i32>().ok())
                     .unwrap_or(0);
 
-                Ok(Response::ok(widgets::render_count(count))?.with_headers(headers))
+                Ok(Response::ok(
+                    widgets::wrap(widgets::NumberBadge::new(count))
+                        .with_padding(2)
+                        .to_string(),
+                )?
+                .with_headers(headers))
             } else {
-                Ok(Response::ok(widgets::render_count(0))?.with_headers(headers))
+                Ok(Response::ok(
+                    widgets::wrap(widgets::NumberBadge::new(0))
+                        .with_padding(2)
+                        .to_string(),
+                )?
+                .with_headers(headers))
             }
         })
         .run(req, env)
