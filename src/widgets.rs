@@ -98,3 +98,47 @@ pub fn render_count(count: i32) -> String {
         )
     }).to_string()
 }
+
+pub fn render_bar(count: i32, total: i32) -> String {
+    let width = 240;
+    let height = 10;
+
+    let fill_width = match total {
+        0 => 0.0,
+        _ => (count as f64) / (total as f64) * (width as f64),
+    };
+
+    let empty_width = (width as f64) - fill_width;
+
+    WidgetWrapper::new(width, height, 2, |f| {
+        write!(
+            f,
+            r###"
+                <mask id="bar-mask">
+                    <rect x="0" y="0" width="{width}" height="{height}" fill="white" rx="5" />
+                </mask>
+                <rect
+                    mask="url(#bar-mask)"
+                    x="0"
+                    y="0"
+                    width="{fill_width}"
+                    height="{height}"
+                    fill="#0969da"
+                />
+                <rect
+                    mask="url(#bar-mask)"
+                    x="{fill_width}"
+                    y="0"
+                    width="{empty_width}"
+                    height="{height}"
+                    fill="#80ccff"
+                />
+            "###,
+            width = width,
+            height = height,
+            fill_width = fill_width,
+            empty_width = empty_width,
+        )
+    })
+    .to_string()
+}
