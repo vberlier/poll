@@ -73,7 +73,7 @@ pub fn render_count(count: i32) -> String {
                 <style>
                 .text {{
                     font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
-                    fill: #762c00;
+                    fill: #32383f;
                     font-size: 14px;
                     font-weight: bold;
                     line-height: 1.5;
@@ -85,8 +85,8 @@ pub fn render_count(count: i32) -> String {
                     y="0"
                     width="{width}"
                     height="{height}"
-                    fill="#fb8f44"
-                    stroke="#fb8f44"
+                    fill="#afb8c1"
+                    stroke="#afb8c1"
                     stroke-width="2"
                     rx="5"
                 />

@@ -67,7 +67,7 @@ fn render_svg(width: i32, height: i32, padding: i32, count: i32, total: i32) -> 
                     y="{padding}"
                     width="{fill_width}"
                     height="{height}"
-                    fill="#2563EB"
+                    fill="#0969da"
                 />
                 <rect
                     mask="url(#bar-mask)"
@@ -75,7 +75,7 @@ fn render_svg(width: i32, height: i32, padding: i32, count: i32, total: i32) -> 
                     y="{padding}"
                     width="{empty_width}"
                     height="{height}"
-                    fill="#93C5FD"
+                    fill="#80ccff"
                 />
             </svg>
         "###,
